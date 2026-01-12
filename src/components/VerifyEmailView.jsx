@@ -1,6 +1,22 @@
-import React from 'react';
+import React,{useState} from 'react';
+import API from '../api/axiosConfig';
 
-export const VerifyEmailView=({onBackToLogin})=>{
+export const VerifyEmailView=({email, onSwitchToLogin})=>{
+    const [resending, setResending] = useState(false);
+    const [message, setMessage] = useState('');
+
+    const handleResend = async () => {
+        setResending(true);
+        try {
+            await API.post('/auth/resend-verify', { email });
+            setMessage('Verification email resent successfully!');
+            setTimeout(() => setMessage(''), 5000);
+        } catch (err) {
+            setMessage('Failed to resend. Please try again later.');
+        } finally {
+            setResending(false);
+        }
+    };
     return(
         <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6">
             <div className="relative bg-slate-900/60 backdrop-blur-2xl w-full max-w-md rounded-[40px] p-12 border border-white/10 shadow-2xl text-center overflow-hidden">
@@ -24,15 +40,26 @@ export const VerifyEmailView=({onBackToLogin})=>{
                     </button>
 
                     <button
-                        onClick={onBackToLogin}
+                        onClick={onSwitchToLogin}
                         className="w-full py-5 text-slate-500 font-black hover:text-white transition-all uppercase tracking-widest text-[10px]"
                     >
                         Back to Login
                     </button>
                 </div>
+                {message && (
+                    <p className="mt-4 text-[10px] font-bold text-emerald-400 uppercase tracking-widest animate-bounce">
+                        {message}
+                    </p>
+                )}
 
                 <p className="mt-8 text-xs text-slate-600 font-bold uppercase tracking-widest">
-                    Didn't get it? <span className="text-indigo-400 cursor-pointer hover:underline">Resend Email</span>
+                    Didn't get it?{" "}
+                    <span
+                        onClick={!resending ? handleResend : null}
+                        className={`text-indigo-400 cursor-pointer hover:underline ${resending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        {resending ? 'Sending...' : 'Resend Email'}
+                    </span>
                 </p>
             </div>
         </div>

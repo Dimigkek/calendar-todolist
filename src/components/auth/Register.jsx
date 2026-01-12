@@ -14,10 +14,8 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
 
         try {
             const response = await API.post('/auth/register', formData);
-
             alert(response.data.message || "Registration Successful! Check your email.");
-            onRegister();
-
+            onRegister(formData.email);
         } catch (err) {
             const errorMessage = err.response?.data?.message || "Registration failed";
             alert(errorMessage);
@@ -50,7 +48,7 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
                         <input
                             type="text"
                             className="w-full bg-black/40 border-2 border-white/5 rounded-2xl p-4 text-white focus:border-indigo-500/50 outline-none transition-all"
-                            placeholder="johndoe"
+                            placeholder="username"
                             onChange={(e) => setFormData({...formData, username: e.target.value})}
                         />
                     </div>
