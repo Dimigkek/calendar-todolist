@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Added useEffect
 import TodoModal from './To-do';
 import { Logout } from "./Logout";
 import {
     format, startOfMonth, startOfWeek, endOfWeek,
     eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, endOfMonth
 } from 'date-fns';
+import API from "../api/axiosConfig";
 
 const Calendar = ({ onLogout }) => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -12,6 +13,38 @@ const Calendar = ({ onLogout }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [tasks, setTasks] = useState([]);
+
+    const fetchTasks = async () => {
+        try {
+            const res = await API.get('/tasks');
+            setTasks(res.data);
+        } catch (err) {
+            console.error("Error loading tasks", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchTasks();
+    }, []);
+
+    const deleteTask = async (id) => {
+        try {
+            await API.delete(`/tasks/${id}`);
+            fetchTasks(); // Refresh the list
+        } catch (err) {
+            console.error("Error deleting task", err);
+        }
+    };
+
+    const toggleTask = async (id) => {
+        try {
+            await API.patch(`/tasks/${id}/toggle`);
+            fetchTasks(); // Refresh UI
+        } catch (err) {
+            console.error("Error toggling task", err);
+        }
+    };
 
     const start = startOfWeek(startOfMonth(currentMonth));
     const end = endOfWeek(endOfMonth(currentMonth));
@@ -52,24 +85,30 @@ const Calendar = ({ onLogout }) => {
                         {days.map((day, idx) => {
                             const isToday = isSameDay(day, new Date());
                             const isSelected = isSameDay(day, selectedDate);
+                            // Logic for task dots
+                            const hasTasks = tasks.some(task => isSameDay(new Date(task.date), day));
+
                             return (
                                 <div
                                     key={idx}
-                                    onClick={() => {
-                                        setSelectedDate(day);
-                                    }}
+                                    onClick={() => setSelectedDate(day)}
                                     className={`h-36 p-5 rounded-[30px] transition-all duration-300 border-2 cursor-pointer relative group
                                     ${!isSameMonth(day, currentMonth) ? 'opacity-10 scale-95' : 'opacity-100'}
                                     ${isSelected ? 'bg-indigo-600/20 border-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.3)]' : 'bg-white/5 border-white/5 hover:border-white/20 hover:bg-white/[0.07]'}
                                     ${isToday ? 'after:content-[""] after:absolute after:top-3 after:right-3 after:w-2 after:h-2 after:bg-indigo-400 after:rounded-full after:animate-ping' : ''}`}
                                 >
                                     <span className={`text-2xl font-black ${isSelected ? 'text-indigo-400' : 'text-slate-100'}`}>{format(day, 'd')}</span>
+
+                                    {hasTasks && (
+                                        <div className="absolute bottom-4 left-5 w-1.5 h-1.5 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
+                                    )}
                                 </div>
                             );
                         })}
                     </div>
                 </div>
             </div>
+
 
             <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -97,11 +136,48 @@ const Calendar = ({ onLogout }) => {
                     </h3>
                 </div>
 
-                <div className="flex-1">
-                    <div className="p-8 rounded-[32px] bg-gradient-to-br from-white/5 to-transparent border border-white/5 border-dashed flex flex-col items-center justify-center text-center space-y-4">
-                        <div className="w-16 h-16 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-500 text-2xl">⚡</div>
-                        <p className="text-slate-500 font-medium text-sm">No plans yet.<br/>Start by adding a new goal!</p>
-                    </div>
+                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                    {tasks.filter(t => isSameDay(new Date(t.date), selectedDate)).map(task => (
+                        <div key={task._id} className={`p-6 rounded-[32px] border transition-all group flex items-center justify-between gap-4 
+        ${task.completed ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-white/5 border-white/10 hover:border-indigo-500/30'}`}>
+
+                            <div className="flex items-center gap-4 flex-1">
+                                <button
+                                    onClick={() => toggleTask(task._id)}
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all border
+                    ${task.completed
+                                        ? 'bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white'
+                                        : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white'}`}
+                                    title={task.completed ? "Mark as incomplete" : "Mark as complete"}
+                                >
+                                    {task.completed ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    )}
+                                </button>
+
+                                <div className="flex-1">
+                                    <p className={`font-medium leading-relaxed transition-all ${task.completed ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
+                                        {task.title}
+                                    </p>
+                                    <div className="mt-2 flex items-center gap-2">
+                    <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md 
+                        ${task.completed ? 'bg-slate-500/10 text-slate-500' : 'bg-indigo-500/10 text-indigo-400'}`}>
+                        {task.category || 'Goal'}
+                    </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => deleteTask(task._id)}
+                                className="p-3 rounded-xl text-slate-600 hover:bg-red-500 hover:text-white transition-all duration-300 opacity-0 group-hover:opacity-100"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            </button>
+                        </div>
+                    ))}
                 </div>
 
                 <button
@@ -115,7 +191,15 @@ const Calendar = ({ onLogout }) => {
                 </button>
             </div>
 
-            {isModalOpen && <TodoModal date={selectedDate} onClose={() => setIsModalOpen(false)} />}
+            {isModalOpen && (
+                <TodoModal
+                    date={selectedDate}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        fetchTasks();
+                    }}
+                />
+            )}
 
             <Logout
                 isOpen={isLogoutModalOpen}
