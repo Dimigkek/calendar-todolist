@@ -1,42 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import Calendar from "./components/Calendar";
-import {VerifyEmailView} from "./components/VerifyEmailView";
+import { VerifyEmailView } from "./components/VerifyEmailView";
+import { AuthContext } from "./context/AuthContext";
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const { user, logout, loading } = useContext(AuthContext);
   const [view, setView] = useState('login');
   const [tempEmail, setTempEmail] = useState('');
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setIsAuthenticated(true);
-    }
-  }, []);
+  if (loading) return null;
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-  };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsAuthenticated(false);
-    setView('login');
-  };
-
-  if (isAuthenticated) {
-      return <Calendar onLogout={handleLogout} />;
-
+  if (user) {
+    return <Calendar onLogout={logout} />;
   }
 
   return (
       <>
         {view === 'login' && (
             <Login
-                onLogin={handleLogin}
+                onLogin={() => {}}
                 onSwitchToRegister={() => setView('register')}
             />
         )}
@@ -53,7 +39,7 @@ const App = () => {
 
         {view === 'verify' && (
             <VerifyEmailView
-                email={tempEmail} // Ensure this is not empty!
+                email={tempEmail}
                 onSwitchToLogin={() => setView('login')}
             />
         )}

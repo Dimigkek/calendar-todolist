@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import API from '../../api/axiosConfig';
+import { AuthContext } from '../../context/AuthContext'; // Ensure this path matches your folder structure
 
 const Login = ({ onLogin, onSwitchToRegister }) => {
     const [formData, setFormData] = useState({
@@ -7,16 +8,20 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
         password: ''
     });
 
+    const { login } = useContext(AuthContext);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
             const response = await API.post('/auth/login', formData);
 
+            // 1. Save credentials for API persistence
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
 
-            alert("Login Successful!");
+            login(response.data.user);
+
 
             onLogin();
 
@@ -30,18 +35,23 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
         <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6">
             <div className="relative bg-slate-900/60 backdrop-blur-2xl w-full max-w-md rounded-[40px] p-12 border border-white/10 shadow-2xl overflow-hidden">
 
-                <div className="text-center mb-10">
+                <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-[100px]" />
+                <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-[100px]" />
+
+                <div className="relative z-10 text-center mb-10">
                     <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Welcome Back</h1>
                     <p className="text-slate-500 text-sm font-medium">Log in to your calendar</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="relative z-10 space-y-6">
                     <div>
                         <label className="block text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-3 ml-2">Email</label>
                         <input
                             type="email"
+                            value={formData.email} // Controlled input
                             className="w-full bg-black/40 border-2 border-white/5 rounded-2xl p-4 text-white focus:border-indigo-500/50 outline-none transition-all shadow-inner"
                             placeholder="name@company.com"
+                            required
                             onChange={(e) => setFormData({...formData, email: e.target.value})}
                         />
                     </div>
@@ -50,8 +60,10 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
                         <label className="block text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-3 ml-2">Password</label>
                         <input
                             type="password"
+                            value={formData.password} // Controlled input
                             className="w-full bg-black/40 border-2 border-white/5 rounded-2xl p-4 text-white focus:border-indigo-500/50 outline-none transition-all shadow-inner"
                             placeholder="••••••••"
+                            required
                             onChange={(e) => setFormData({...formData, password: e.target.value})}
                         />
                     </div>
@@ -64,7 +76,7 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
                     </button>
                 </form>
 
-                <div className="mt-8 text-center">
+                <div className="relative z-10 mt-8 text-center">
                     <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">
                         Don't have an account?
                         <span
