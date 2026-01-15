@@ -1,8 +1,12 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react'; // Added useEffect
+import { useLocation, useNavigate } from 'react-router-dom'; // Added for URL detection
 import API from '../../api/axiosConfig';
-import { AuthContext } from '../../context/AuthContext'; // Ensure this path matches your folder structure
+import { AuthContext } from '../../context/AuthContext';
 
 const Login = ({ onLogin, onSwitchToRegister }) => {
+    const location = useLocation(); // Added
+    const navigate = useNavigate(); // Added
+
     const [formData, setFormData] = useState({
         email: '',
         password: ''
@@ -10,19 +14,25 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
 
     const { login } = useContext(AuthContext);
 
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        if (queryParams.get('verified') === 'true') {
+            alert("Verification complete! You can now log in.");
+            navigate('/login', { replace: true });
+        }
+    }, [location, navigate]);
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
             const response = await API.post('/auth/login', formData);
 
-            // 1. Save credentials for API persistence
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
 
             login(response.data.user);
-
-
             onLogin();
 
         } catch (err) {
@@ -48,7 +58,7 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
                         <label className="block text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-3 ml-2">Email</label>
                         <input
                             type="email"
-                            value={formData.email} // Controlled input
+                            value={formData.email}
                             className="w-full bg-black/40 border-2 border-white/5 rounded-2xl p-4 text-white focus:border-indigo-500/50 outline-none transition-all shadow-inner"
                             placeholder="name@company.com"
                             required
@@ -60,7 +70,7 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
                         <label className="block text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-3 ml-2">Password</label>
                         <input
                             type="password"
-                            value={formData.password} // Controlled input
+                            value={formData.password}
                             className="w-full bg-black/40 border-2 border-white/5 rounded-2xl p-4 text-white focus:border-indigo-500/50 outline-none transition-all shadow-inner"
                             placeholder="••••••••"
                             required
