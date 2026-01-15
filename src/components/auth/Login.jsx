@@ -49,7 +49,7 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
                 <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-[100px]" />
 
                 <div className="relative z-10 text-center mb-10">
-                    <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Welcome Back</h1>
+                    <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Welcome</h1>
                     <p className="text-slate-500 text-sm font-medium">Log in to your calendar</p>
                 </div>
 
