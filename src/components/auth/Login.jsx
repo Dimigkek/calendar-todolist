@@ -1,11 +1,11 @@
-import React, { useState, useContext, useEffect } from 'react'; // Added useEffect
-import { useLocation, useNavigate } from 'react-router-dom'; // Added for URL detection
+import React, { useState, useContext, useEffect } from 'react'; 
+import { useLocation, useNavigate } from 'react-router-dom'; 
 import API from '../../api/axiosConfig';
 import { AuthContext } from '../../context/AuthContext';
 
 const Login = ({ onLogin, onSwitchToRegister }) => {
-    const location = useLocation(); // Added
-    const navigate = useNavigate(); // Added
+    const location = useLocation();
+    const navigate = useNavigate(); 
 
     const [formData, setFormData] = useState({
         email: '',
